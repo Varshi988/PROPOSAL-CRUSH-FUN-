@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Gentle Note</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            /* Palette */
+            --bg-gradient-start: #fdfbf7;
+            --bg-gradient-end: #faeef5;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --text-main: #5d5d5d;
+            --text-heading: #4a4a4a;
+            --accent-lavender: #e6e6fa;
+            --accent-blush: #ffcdd2;
+            --accent-sage: #c1e1c1; 
+            --accent-mute: #d7ccc8; 
+            
+            /* Spacing & Radius */
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --spacing-unit: 1rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            cursor: default; 
+        }
+
+        /* Background Canvas */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Audio Control */
+        .audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            color: var(--text-heading);
+        }
+
+        .audio-control:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Main Container */
+        #app {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Glass Card Component */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            position: absolute;
+            transform: translateY(20px);
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--text-heading);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+        }
+
+        p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            font-weight: 300;
+        }
+
+        .italic-text {
+            font-style: italic;
+            font-family: 'Playfair Display', serif;
+            color: #7a7a7a;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 50px;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            background: #fff;
+            color: var(--text-heading);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: rgba(230, 230, 250, 0.6);
+            border: 1px solid var(--accent-lavender);
+        }
+        
+        .btn-choice-yes {
+            background: rgba(193, 225, 193, 0.5); 
+            border: 1px solid var(--accent-sage);
+            color: #2e4a2e;
+        }
+
+        .btn-choice-no {
+            background: rgba(215, 204, 200, 0.5); 
+            border: 1px solid var(--accent-mute);
+            color: #5d4037;
+        }
+
+        /* Beauty Cards */
+        .beauty-list {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .beauty-item {
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-blush);
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+
+        /* Timeline */
+        .timeline-container {
+            position: relative;
+            padding: 20px 0;
+            margin-top: 20px;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(0,0,0,0.05);
+            transform: translateX(-50%);
+        }
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blush);
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.8);
+        }
+        .timeline-content {
+            background: rgba(255,255,255,0.4);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        /* Likes Toggles */
+        .preference-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .pref-card {
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .pref-card.selected {
+            background: #fff;
+            border-color: var(--accent-lavender);
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .pref-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Floating Stickers */
+        .sticker {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .glass-card {
+                padding: 30px 20px;
+                width: 95%;
+            }
+            h1 { font-size: 1.8rem; }
+            .preference-grid { grid-template-columns: 1fr; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="audio-control" id="audio-btn" title="Toggle Music">
+        <i class="fas fa-music"></i>
+    </div>
+    <audio id="bg-music" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+    </audio>
+
+    <main id="app">
+        <!-- 1. Landing -->
+        <section class="glass-card active" id="step-1">
+            <h1>Hi.</h1>
+            <p>This is not a prank.<br>Not a joke.<br>And not a demand.<br>I need honest answers/replies.</p>
+            <button class="btn btn-primary" onclick="nextStep(2)">Continue only if you want to</button>
+        </section>
+
+        <!-- 2. Beauty Section -->
+        <section class="glass-card hidden" id="step-2">
+            <div style="margin-bottom: 20px;">
+                <i class="fas fa-sparkles sticker" style="top: -20px; right: 20px;"></i>
+                <h2>Beauty</h2>
+                <p class="italic-text">Not just what the eyes see.</p>
+            </div>
+            
+            <div id="beauty-container" class="hidden">
+                <!-- UPDATED TEXT -->
+                <div class="beauty-item">You make spaces feel calmer without speaking.</div>
+                <div class="beauty-item">There’s kindness in you that doesn’t ask to be noticed.</div>
+                <div class="beauty-item">Some people are loud beautiful. You’re quietly unforgettable.</div>
+            </div>
+
+            <button class="btn btn-primary hidden" id="beauty-next-btn" style="margin-top: 20px;" onclick="nextStep(3)">That's kind...</button>
+            <button class="btn" id="beauty-reveal-btn" onclick="revealBeauty()">Click here to know about your beauty</button>
+        </section>
+
+        <!-- 3. Silent Admiration Timeline -->
+        <section class="glass-card hidden" id="step-3">
+            <h2>Silent Admiration</h2>
+            <p>A few moments I've kept to myself.</p>
+            
+            <div class="timeline-container">
+                <div class="timeline-line"></div>
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h4>The First Notice</h4>
+                    <p style="margin:0; font-size: 0.9rem;">The first moment I noticed you.</p>
+                </div>
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h4>Unspoken</h4>
+                    <p style="margin:0; font-size: 0.9rem;">Unspoken moments I still remember.</p>
+                </div>
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <h4>Small Details</h4>
+                    <p style="margin:0; font-size: 0.9rem;">Small details most people miss.</p>
+                </div>
+            </div>
+
+            <button class="btn" onclick="nextStep('3-5')">Continue</button>
+        </section>
+
+        <!-- 3.5 NEW SECTION: WHY HER -->
+        <section class="glass-card hidden" id="step-3-5">
+            <h2>Why You</h2>
+            <p class="italic-text">
+                Not because you tried to stand out.
+                <br>But because you never tried to.
+            </p>
+            <p>
+                There are many beautiful people.
+                <br>
+                But very few who feel calm to think about.
+            </p>
+            <button class="btn" onclick="nextStep(4)">I see</button>
+        </section>
+
+        <!-- 4. Likes & Dislikes -->
+        <section class="glass-card hidden" id="step-4">
+            <h2>Small Things</h2>
+            <p>I might be wrong — and that’s okay.</p>
+            <p>Tell me about your likes...</p>
+            
+            <div class="preference-grid">
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-coffee pref-icon"></i> Coffee
+                </div>
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-mug-hot pref-icon"></i> Tea
+                </div>
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-cloud-rain pref-icon"></i> Rain
+                </div>
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-sun pref-icon"></i> Sunshine
+                </div>
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-moon pref-icon"></i> Night
+                </div>
+                <div class="pref-card" onclick="selectPref(this)">
+                    <i class="fas fa-sun-plant-wilt pref-icon"></i> Morning
+                </div>
+            </div>
+
+            <button class="btn" onclick="nextStep(5)">These are nice, but...</button>
+        </section>
+
+        <!-- 5. Gentle Questions 1 -->
+        <section class="glass-card hidden" id="step-5">
+            <h3>A Gentle Question</h3>
+            <p class="italic-text" style="font-size: 1.3rem; margin-bottom: 2rem;">Do you like honesty?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="nextStep(6)">Yes</button>
+                <button class="btn" onclick="nextStep(6)">Sometimes</button>
+                <button class="btn" onclick="nextStep(6)">No</button>
+            </div>
+        </section>
+
+        <!-- 6. Gentle Questions 2 -->
+        <section class="glass-card hidden" id="step-6">
+            <h3>Another Thought</h3>
+            <p class="italic-text" style="font-size: 1.3rem; margin-bottom: 2rem;">Do you believe feelings should be respected?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="nextStep(7)">Always</button>
+                <button class="btn" onclick="nextStep(7)">I think so</button>
+                <button class="btn" onclick="nextStep(7)">No</button>
+            </div>
+        </section>
+
+        <!-- 7. Gentle Questions 3 -->
+        <section class="glass-card hidden" id="step-7">
+            <h3>The Last One</h3>
+            <p class="italic-text" style="font-size: 1.3rem; margin-bottom: 2rem;">Is it okay for someone to admire you silently?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn" onclick="nextStep(8)">Yes</button>
+                <button class="btn" onclick="nextStep(8)">I don't mind</button>
+                <button class="btn" onclick="nextStep(8)">No, I don't like</button>
+            </div>
+        </section>
+
+        <!-- 8. Emotional Pause -->
+        <section class="glass-card hidden" id="step-8" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.4);">
+            <div id="pause-text" style="opacity: 0;">
+                <p style="margin-bottom: 10px;">Before I say anything important…</p>
+                <h2 style="margin-bottom: 10px;">You owe me nothing.</h2>
+                <p>Not a yes.<br>Not even a reply.</p>
+            </div>
+        </section>
+
+        <!-- 9. Proposal (With Vulnerability & Cursor Effect) -->
+        <section class="glass-card hidden" id="step-9">
+            <i class="fas fa-heart sticker" style="top: -20px; left: 50%; transform: translateX(-50%); color: var(--accent-blush);"></i>
+            <h2>The Truth</h2>
+            <p>I Love You.</p>
+            <p class="italic-text">Not because I expect something.<br>But because it felt right to be honest.</p>
+            
+            <!-- NEW VULNERABILITY LINE -->
+            <p style="margin-top: 1rem; font-weight: 400; color: #666;">Saying this scared me alot.</p>
+
+            <p>If someday you feel the same, I’d be grateful.<br>If not, I’ll still respect you.</p>
+            
+            <button class="btn btn-primary" onclick="nextStep(10)">I understand</button>
+        </section>
+
+        <!-- 10. Final Choice (Warmer Buttons) -->
+        <section class="glass-card hidden" id="step-10">
+            <h2>Your Choice</h2>
+            <p>No pressure. Just honesty.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 30px;">
+                <!-- UPDATED BUTTON COPY -->
+                <button class="btn btn-choice-yes" onclick="handleChoice('think')">
+                    I need time to think about it
+                </button>
+                <button class="btn btn-choice-no" onclick="handleChoice('no')">
+                    No. I'm not interested in you
+                </button>
+                <button class="btn btn-choice-yes" onclick="handleChoice('yes')">
+                    I'm ready to have a relationship with you
+                </button>
+            </div>
+        </section>
+
+        <!-- 11. Response -->
+        <section class="glass-card hidden" id="step-11">
+            <div id="response-content">
+                <!-- Content injected via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MAIN APP LOGIC -->
+    <script>
+        // --- 1. Audio Logic ---
+        const audioBtn = document.getElementById('audio-btn');
+        const bgMusic = document.getElementById('bg-music');
+        let isPlaying = false;
+
+        audioBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                bgMusic.pause();
+                audioBtn.innerHTML = '<i class="fas fa-music"></i>';
+                gsap.to(audioBtn, {opacity: 0.7});
+            } else {
+                bgMusic.volume = 0.4;
+                bgMusic.play().catch(e => console.log("Audio play failed:", e));
+                audioBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                gsap.to(audioBtn, {opacity: 1});
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // --- 2. Background Particle System ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height + height; 
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = -Math.random() * 1 - 0.5; 
+                this.size = Math.random() * 5 + 2;
+                this.color = `rgba(255, 183, 178, ${Math.random() * 0.3})`; 
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                if (this.y < -50) this.reset();
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initParticles() {
+            resize();
+            for (let i = 0; i < 40; i++) {
+                particles.push(new Particle());
+                particles[i].y = Math.random() * height;
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resize);
+        initParticles();
+
+        // --- 3. Navigation & Animation Logic ---
+        
+        function revealBeauty() {
+            const btn = document.getElementById('beauty-reveal-btn');
+            const container = document.getElementById('beauty-container');
+            const nextBtn = document.getElementById('beauty-next-btn');
+            const items = document.querySelectorAll('.beauty-item');
+
+            gsap.to(btn, { opacity: 0, duration: 0.5, onComplete: () => btn.classList.add('hidden') });
+            container.classList.remove('hidden');
+
+            gsap.to(items, {
+                opacity: 1,
+                x: 0,
+                duration: 0.8,
+                stagger: 0.4,
+                ease: "power2.out",
+                onComplete: () => {
+                    nextBtn.classList.remove('hidden');
+                    gsap.fromTo(nextBtn, {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.6});
+                }
+            });
+        }
+
+        function selectPref(card) {
+            card.classList.toggle('selected');
+        }
+
+        function nextStep(stepId) {
+            const current = document.querySelector('.glass-card:not(.hidden)');
+            const next = document.getElementById(`step-${stepId}`);
+
+            gsap.to(current, {
+                opacity: 0,
+                y: -20,
+                duration: 0.6,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    current.classList.add('hidden');
+                    next.classList.remove('hidden');
+                    gsap.set(next, { y: 20, opacity: 0 }); 
+                    gsap.to(next, {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.8,
+                        ease: "power2.out"
+                    });
+
+                    if(stepId == 8) {
+                        gsap.to("#pause-text", {
+                            opacity: 1,
+                            duration: 2,
+                            delay: 0.5,
+                            ease: "none"
+                        });
+                        setTimeout(() => {
+                            if(!document.getElementById('step-8').classList.contains('hidden')){
+                                nextStep(9);
+                            }
+                        }, 5500);
+                    }
+
+                    if(stepId == 3) {
+                        gsap.to(".timeline-content", {
+                            opacity: 1,
+                            y: 0,
+                            duration: 0.8,
+                            stagger: 0.6,
+                            delay: 0.3,
+                            ease: "power2.out"
+                        });
+                    }
+                }
+            });
+        }
+
+        // --- 4. Final Response Logic (With Firebase Call) ---
+        function handleChoice(type) {
+             let responseText = "";
+
+              if (type === "think") {
+                 responseText = "I need time to think about it";
+                 } else if (type === "yes") {
+                   responseText = "I'm ready to have a relationship with you";
+                  } else if (type === "no") {
+                  responseText = "No. I'm not interested in you";
+                 }
+
+                 // 🔥 Save EXACT text to Firebase
+                 saveResponse(responseText);
+
+                 const responseDiv = document.getElementById('response-content');
+
+             responseDiv.innerHTML = `
+           <h2>Thank you for being honest.<br>I respect your choice...</h2>
+         <p>${responseText}</p>
+         `;
+                 nextStep(11);
+}
+
+
+        // --- 5. Cursor Heart Effect (Only on Proposal Page) ---
+        document.addEventListener("mousemove", e => {
+            const proposalPage = document.getElementById('step-9');
+            if (proposalPage && !proposalPage.classList.contains('hidden')) {
+                if(Math.random() > 0.85) { 
+                    const heart = document.createElement("div");
+                    heart.innerHTML = "💗";
+                    heart.style.position = "absolute";
+                    heart.style.left = e.pageX + "px";
+                    heart.style.top = e.pageY + "px";
+                    heart.style.pointerEvents = "none";
+                    heart.style.opacity = 0.6;
+                    heart.style.fontSize = (Math.random() * 10 + 10) + "px"; 
+                    heart.style.zIndex = "999";
+                    document.body.appendChild(heart);
+
+                    gsap.to(heart, {
+                        y: -40,
+                        opacity: 0,
+                        duration: 1.5,
+                        ease: "power1.out",
+                        onComplete: () => heart.remove()
+                    });
+                }
+            }
+        });
+
+        // Init
+        window.addEventListener('load', () => {
+            gsap.to("#step-1", { opacity: 1, y: 0, duration: 1.5, ease: "power3.out" });
+        });
+    </script>
+
+    <!-- ✅ FIREBASE SDK SETUP (Corrected for Vanilla HTML) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      // ✅ YOUR Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyB94AZSWuLrDQWeVxNq6YMPEj4YPmO5yjs",
+        authDomain: "proposal-97057.firebaseapp.com",
+        projectId: "proposal-97057",
+        storageBucket: "proposal-97057.firebasestorage.app",
+        messagingSenderId: "537167331749",
+        appId: "1:537167331749:web:efc25d24d32367898b284c"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // ✅ Function to save her response
+      window.saveResponse = async function (choice) {
+  alert("Thanks for choosing...");   // ✅ FIX-2 line
+
+  await addDoc(collection(db, "proposalResponses"), {
+    response: choice,
+    time: serverTimestamp()
+  });
+};
+
+    </script>
+
+</body>
+</html>
